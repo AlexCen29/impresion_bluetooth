@@ -9,6 +9,10 @@ import 'package:intl/intl.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:image/image.dart' as img;
+
 
 class ImpresionTicketScreen extends StatefulWidget {
   @override
@@ -132,9 +136,32 @@ class _ImpresionTicketScreenState extends State<ImpresionTicketScreen> {
     String formattedTime = timeFormatter.format(now);
     final profile = await CapabilityProfile.load();
     final generator = Generator(PaperSize.mm58, profile);
+    //cargar la imagen
+    final ByteData data = await rootBundle.load('assets/img/siv_Logo.png');
+    final Uint8List bytesImg = data.buffer.asUint8List();
+
+    //decodificar la imagen
+    final img.Image? image = img.decodeImage(bytesImg);
+    if (image == null) {
+      throw Exception('No se pudo decodificar la imagen');
+    }
+
+    final img.Image? originalImage = img.decodeImage(bytesImg);
+if (originalImage == null) {
+  throw Exception('No se pudo decodificar la imagen');
+}
+
+//ajustar el tamaño de la imagen
+const int maxWidth = 160;
+
+final img.Image resizedImage = img.copyResize(
+  originalImage,
+  width: maxWidth,
+);
     List<int> bytes = [];
 
     //encabezado
+    bytes += generator.image(resizedImage);
     bytes += generator.text(provider.nombre,
         styles: const PosStyles(bold: true, align: PosAlign.center, codeTable: 'CP1252'));
     bytes += generator.feed(1);
