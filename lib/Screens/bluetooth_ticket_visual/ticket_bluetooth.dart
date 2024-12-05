@@ -13,7 +13,6 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:image/image.dart' as img;
 
-
 class ImpresionTicketScreen extends StatefulWidget {
   @override
   _ImpresionTicketScreenState createState() => _ImpresionTicketScreenState();
@@ -82,8 +81,7 @@ class _ImpresionTicketScreenState extends State<ImpresionTicketScreen> {
       }
     } finally {
       if (mounted) {
-        setState(() {
-        });
+        setState(() {});
       }
     }
     Navigator.pop(context);
@@ -100,9 +98,7 @@ class _ImpresionTicketScreenState extends State<ImpresionTicketScreen> {
       if (formatoImpresora == "58mm") {
         ticket = await _generateTicket58(provider);
       } else {
-        //ticket = await _generateTicket80(provider);
-        //esto es temporal
-        ticket = await _generateTicket58(provider);
+        ticket = await _generateTicket80(provider);
       }
       final result = await PrintBluetoothThermal.writeBytes(ticket);
       setState(() {
@@ -116,14 +112,13 @@ class _ImpresionTicketScreenState extends State<ImpresionTicketScreen> {
         _status = 'Error al imprimir: $e';
       });
     } finally {
-      setState(() {
-      });
+      setState(() {});
     }
     Navigator.pop(context);
   }
 
   //checar esto para la imagen
-  
+
   /*final ByteData data = await rootBundle.load('assets/mylogo.jpg');
     final Uint8List bytesImg = data.buffer.asUint8List();
     img.Image? image = img.decodeImage(bytesImg);*/
@@ -147,23 +142,24 @@ class _ImpresionTicketScreenState extends State<ImpresionTicketScreen> {
     }
 
     final img.Image? originalImage = img.decodeImage(bytesImg);
-if (originalImage == null) {
-  throw Exception('No se pudo decodificar la imagen');
-}
+    if (originalImage == null) {
+      throw Exception('No se pudo decodificar la imagen');
+    }
 
 //ajustar el tamaño de la imagen
-const int maxWidth = 160;
+    const int maxWidth = 160;
 
-final img.Image resizedImage = img.copyResize(
-  originalImage,
-  width: maxWidth,
-);
+    final img.Image resizedImage = img.copyResize(
+      originalImage,
+      width: maxWidth,
+    );
     List<int> bytes = [];
 
     //encabezado
     bytes += generator.image(resizedImage);
     bytes += generator.text(provider.nombre,
-        styles: const PosStyles(bold: true, align: PosAlign.center, codeTable: 'CP1252'));
+        styles: const PosStyles(
+            bold: true, align: PosAlign.center, codeTable: 'CP1252'));
     bytes += generator.feed(1);
     bytes += generator.text(provider.direccion,
         styles: const PosStyles(align: PosAlign.center, codeTable: 'CP1252'));
@@ -192,7 +188,7 @@ final img.Image resizedImage = img.copyResize(
     bytes += generator.feed(1);
     bytes += generator.row([
       PosColumn(
-        text: 'Folio: ${provider.folio}',	
+        text: 'Folio: ${provider.folio}',
         width: 6,
         styles: const PosStyles(
             align: PosAlign.left,
@@ -259,7 +255,7 @@ final img.Image resizedImage = img.copyResize(
               width: PosTextSize.size1),
         ),
         PosColumn(
-          text: '\$${(item.precio*item.cantidad).toStringAsFixed(2)}',
+          text: '\$${(item.precio * item.cantidad).toStringAsFixed(2)}',
           width: 3,
           styles: const PosStyles(
               align: PosAlign.right,
@@ -326,7 +322,7 @@ final img.Image resizedImage = img.copyResize(
       ),
     ]);
     bytes += generator.feed(1);
-    
+
     //tota con iva
     bytes += generator.row([
       PosColumn(
@@ -347,7 +343,9 @@ final img.Image resizedImage = img.copyResize(
             width: PosTextSize.size1),
       ),
       PosColumn(
-        text: ((provider.subtotalCompra+provider.ivaCompra).toStringAsFixed(2)).toString(),
+        text:
+            ((provider.subtotalCompra + provider.ivaCompra).toStringAsFixed(2))
+                .toString(),
         width: 4,
         styles: const PosStyles(
             align: PosAlign.right,
@@ -357,7 +355,7 @@ final img.Image resizedImage = img.copyResize(
       ),
     ]);
     bytes += generator.feed(1);
-    
+
     //detalles
     bytes += generator.row([
       PosColumn(
@@ -407,8 +405,7 @@ final img.Image resizedImage = img.copyResize(
     bytes += generator.text(provider.correo,
         styles: const PosStyles(align: PosAlign.center));
     bytes += generator.text('¡¡GRACIAS POR SU PREFERENCIA!!',
-        styles: const PosStyles(
-            align: PosAlign.left, codeTable: 'CP1252'));
+        styles: const PosStyles(align: PosAlign.left, codeTable: 'CP1252'));
     bytes += generator.row([
       PosColumn(
         text: provider.app,
@@ -436,328 +433,332 @@ final img.Image resizedImage = img.copyResize(
     return bytes;
   }
 
-  // Future<List<int>> _generateTicket80(TicketCompraProvider provider) async {
-  //   var now = DateTime.now();
-  //   var dateFormatter = DateFormat('dd/MM/yyyy');
-  //   var timeFormatter = DateFormat('hh:mm a');
-  //   String formattedDate = dateFormatter.format(now);
-  //   String formattedTime = timeFormatter.format(now);
-  //   final profile = await CapabilityProfile.load();
-  //   final generator = Generator(PaperSize.mm80, profile);
-  //   Empresa empresa = context.read<EmpresaProvider>().empresaList[0];
-  //   List<int> bytes = [];
+  Future<List<int>> _generateTicket80(TicketCompraProvider provider) async {
+    var now = DateTime.now();
+    var dateFormatter = DateFormat('dd/MM/yyyy');
+    var timeFormatter = DateFormat('hh:mm a');
+    String formattedDate = dateFormatter.format(now);
+    String formattedTime = timeFormatter.format(now);
+    final profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm80, profile);
+    //cargar la imagen
+    final ByteData data = await rootBundle.load('assets/img/siv_Logo.png');
+    final Uint8List bytesImg = data.buffer.asUint8List();
 
-  //   // Encabezado
-  //   bytes += generator.text(empresa.nombreComercial,
-  //       styles: const PosStyles(bold: true, align: PosAlign.center));
-  //   bytes += generator.text(empresa.rfc,
-  //       styles: const PosStyles(bold: true, align: PosAlign.center));
-  //   bytes += generator.feed(1);
-  //   bytes += generator.text(
-  //       '${empresa.calle} ${empresa.referencia} Col.: ${empresa.colonia} C.P.: ${empresa.cp} ${empresa.descMunicipio} ${empresa.descEstado}',
-  //       styles: const PosStyles(bold: true, align: PosAlign.center));
-  //   bytes += generator.feed(2);
-  //   bytes += generator.text('ORIGINAL',
-  //       styles: const PosStyles(
-  //           bold: true,
-  //           align: PosAlign.center,
-  //           height: PosTextSize.size2,
-  //           width: PosTextSize.size2));
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: "$formattedDate ",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.right,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: " $formattedTime",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: "Ticket#: ${provider.folio}",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: "ATENDIO: ${provider.atendio}",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.row([
-  //     PosColumn(
-  //         text: '(', width: 1, styles: const PosStyles(align: PosAlign.left)),
-  //     PosColumn(
-  //       text: 'NORMAL',
-  //       width: 10,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //         text: ')', width: 1, styles: const PosStyles(align: PosAlign.right)),
-  //   ]);
-  //   //DAtos del cliente
-  //   bytes += generator.feed(2);
-  //   bytes += generator.text('DATOS DEL CLIENTE',
-  //       styles: const PosStyles(bold: true, align: PosAlign.center));
-  //   bytes += generator.text('-------------------',
-  //       styles: const PosStyles(
-  //           bold: true, align: PosAlign.center, width: PosTextSize.size2));
-  //   bytes += generator.text('NOMBRE: ${provider.cliente!.nombreCliente}',
-  //       styles: const PosStyles(align: PosAlign.left));
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: "RFC: ${provider.cliente!.rfcCliente}",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: "TEL: ${provider.cliente!.telCliente}",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.text('DIRECCION: ${provider.cliente!.dirCliente}',
-  //       styles: const PosStyles(align: PosAlign.left));
-  //   bytes += generator.feed(1);
-  //   //ENCABEZDO de compra
-  //   bytes += generator.text("DESCRIPCION",
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           bold: true,
-  //           width: PosTextSize.size1,
-  //           height: PosTextSize.size1));
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: 'CANT',
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.left,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: 'P.UNITARIO',
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: 'IMPORTE',
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.right,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.text('-------------------',
-  //       styles: const PosStyles(
-  //           bold: true, align: PosAlign.center, width: PosTextSize.size2));
-  //   // Detalles de la compra
-  //   for (DetallesVenta item in provider.listaDetalles ?? []) {
-  //     bytes += generator.text(item.descripcion,
-  //         styles: const PosStyles(
-  //             align: PosAlign.left,
-  //             width: PosTextSize.size1,
-  //             height: PosTextSize.size1));
-  //     bytes += generator.row([
-  //       PosColumn(
-  //         text: item.cantidad.toStringAsFixed(2),
-  //         width: 4,
-  //         styles: const PosStyles(
-  //             align: PosAlign.left,
-  //             bold: true,
-  //             height: PosTextSize.size1,
-  //             width: PosTextSize.size1),
-  //       ),
-  //       PosColumn(
-  //         text: "\$${item.precioReal.toStringAsFixed(2)}",
-  //         width: 4,
-  //         styles: const PosStyles(
-  //             align: PosAlign.center,
-  //             bold: true,
-  //             height: PosTextSize.size1,
-  //             width: PosTextSize.size1),
-  //       ),
-  //       PosColumn(
-  //         text: '\$${item.importe.toStringAsFixed(2)}',
-  //         width: 4,
-  //         styles: const PosStyles(
-  //             align: PosAlign.right,
-  //             bold: true,
-  //             height: PosTextSize.size1,
-  //             width: PosTextSize.size1),
-  //       ),
-  //     ]);
-  //     bytes += generator.feed(1);
-  //   }
-  //   bytes += generator.text('-------------------',
-  //       styles: const PosStyles(
-  //           bold: true, align: PosAlign.center, width: PosTextSize.size2));
-  //   //TOTAL CAMBIO DESCUENTO
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: '',
-  //       width: 4,
-  //     ),
-  //     PosColumn(
-  //       text: 'TOTAL DESCUENTO:',
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: provider.totalDescuento.toStringAsFixed(2),
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.right,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.feed(1);
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: '',
-  //       width: 4,
-  //     ),
-  //     PosColumn(
-  //       text: 'TOTAL:',
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: provider.total.toStringAsFixed(2),
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.right,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.feed(1);
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: 'ENTREGO:',
-  //       width: 2,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: (provider.total + provider.cambio).toStringAsFixed(2),
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.right,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: 'CAMBIO:',
-  //       width: 2,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: provider.cambio.toStringAsFixed(2),
-  //       width: 4,
-  //       styles: const PosStyles(
-  //           align: PosAlign.right,
-  //           bold: true,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes += generator.feed(1);
-  //   bytes += generator.text('**************************************',
-  //       styles: const PosStyles(align: PosAlign.center));
-  //   bytes += generator.feed(1);
-  //   //forma de pago
-  //   StringBuffer formaPagoBuffer = StringBuffer('FORMA DE PAGO: ');
-  //   for (TipoPago item in provider.tiposDePago ?? []) {
-  //     if (item.valorPago > 0) {
-  //       formaPagoBuffer.write('${item.tipoPago}= \$${item.valorPago} ');
-  //     }
-  //   }
-  //   bytes += generator.text(formaPagoBuffer.toString().trim());
-  //   bytes += generator.feed(1);
-  //   //Pie de página
-  //   bytes += generator.text('**************************************',
-  //       styles: const PosStyles(align: PosAlign.center));
-  //   bytes += generator.text('¡Gracias por su compra!',
-  //       styles: const PosStyles(align: PosAlign.left, bold: true));
-  //   bytes += generator.feed(1);
-  //   bytes += generator.text('¡Excelente día!',
-  //       styles: const PosStyles(
-  //           align: PosAlign.left, bold: true, codeTable: 'CP1252'));
-  //   bytes += generator.feed(1);
-  //   bytes += generator.text('**************************************',
-  //       styles: const PosStyles(bold: true, align: PosAlign.center));
-  //   bytes += generator.row([
-  //     PosColumn(
-  //       text: "ATENCION A CLIENTES",
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //     PosColumn(
-  //       text: empresa.telefono,
-  //       width: 6,
-  //       styles: const PosStyles(
-  //           align: PosAlign.center,
-  //           height: PosTextSize.size1,
-  //           width: PosTextSize.size1),
-  //     ),
-  //   ]);
-  //   bytes+=generator.feed(1);
-  //   bytes += generator.cut();
-  //   return bytes;
-  // }
+    //decodificar la imagen
+    final img.Image? image = img.decodeImage(bytesImg);
+    if (image == null) {
+      throw Exception('No se pudo decodificar la imagen');
+    }
+
+    final img.Image? originalImage = img.decodeImage(bytesImg);
+    if (originalImage == null) {
+      throw Exception('No se pudo decodificar la imagen');
+    }
+
+//ajustar el tamaño de la imagen
+    const int maxWidth = 160;
+
+    final img.Image resizedImage = img.copyResize(
+      originalImage,
+      width: maxWidth,
+    );
+    List<int> bytes = [];
+
+    //encabezado
+    bytes += generator.image(resizedImage);
+    bytes += generator.text(provider.nombre,
+        styles: const PosStyles(
+            bold: true, align: PosAlign.center, codeTable: 'CP1252'));
+    bytes += generator.feed(1);
+    bytes += generator.text(provider.direccion,
+        styles: const PosStyles(align: PosAlign.center, codeTable: 'CP1252'));
+    bytes += generator.feed(1);
+    //fecha y hora
+    bytes += generator.row([
+      PosColumn(
+        text: formattedDate,
+        width: 5,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: "",
+        width: 2,
+        styles: const PosStyles(
+            align: PosAlign.center,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: formattedTime,
+        width: 5,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+    ]);
+    bytes += generator.text('CHEQUE DE CONSUMO',
+        styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.feed(1);
+    bytes += generator.row([
+      PosColumn(
+        text: 'Folio: ${provider.folio}',
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: 'Comanda: ${provider.comanda}',
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+    ]);
+     bytes += generator.text('M # ${provider.mesa}',
+        styles: const PosStyles(align: PosAlign.left));
+    //detalle de la compra encabezado
+    bytes += generator.row([
+      PosColumn(
+        text: 'CANT',
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: 'DESCRIPCION',
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.center,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1,
+            codeTable: 'CP1252'),
+      ),
+      PosColumn(
+        text: 'TOTAL',
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+    ]);
+    // Detalles de la compra
+    for (Producto item in provider.productos ?? []) {
+      bytes += generator.row([
+        PosColumn(
+          text: item.cantidad.toStringAsFixed(2),
+          width: 3,
+          styles: const PosStyles(
+              align: PosAlign.left,
+              height: PosTextSize.size1,
+              width: PosTextSize.size1),
+        ),
+        PosColumn(
+          text: item.descripcion,
+          width: 6,
+          styles: const PosStyles(
+              align: PosAlign.center,
+              height: PosTextSize.size1,
+              width: PosTextSize.size1),
+        ),
+        PosColumn(
+          text: '\$${(item.precio * item.cantidad).toStringAsFixed(2)}',
+          width: 3,
+          styles: const PosStyles(
+              align: PosAlign.right,
+              height: PosTextSize.size1,
+              width: PosTextSize.size1),
+        ),
+      ]);
+      bytes += generator.text('------------------------------------------------',
+          styles: const PosStyles(bold: true, align: PosAlign.center));
+    }
+    //importes de la compra
+    bytes += generator.row([
+      PosColumn(
+        text: '',
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: 'Subtotal',
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.center,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: provider.subtotalCompra.toString(),
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+    ]);
+    bytes += generator.row([
+      PosColumn(
+        text: '',
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: 'IVA',
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.center,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: provider.ivaCompra.toString(),
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+    ]);
+    bytes += generator.feed(1);
+
+    //tota con iva
+    bytes += generator.row([
+      PosColumn(
+        text: '',
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text: 'Importe Total',
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.center,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+      PosColumn(
+        text:
+            ((provider.subtotalCompra + provider.ivaCompra).toStringAsFixed(2))
+                .toString(),
+        width: 3,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1),
+      ),
+    ]);
+    bytes += generator.feed(1);
+
+    //detalles
+    bytes += generator.row([
+      PosColumn(
+        text: 'Mesero:',
+        width: 2,
+        styles: const PosStyles(
+          align: PosAlign.left,
+          bold: true,
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+          codeTable: 'CP1252',
+        ),
+      ),
+      PosColumn(
+        text: provider.mesero,
+        width: 10,
+        styles: const PosStyles(
+          align: PosAlign.left,
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+          codeTable: 'CP1252',
+        ),
+      ),
+    ]);
+    bytes += generator.row([
+      PosColumn(
+        text: 'Cajero:',
+        width: 2,
+        styles: const PosStyles(
+          align: PosAlign.left,
+          bold: true,
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+          codeTable: 'CP1252',
+        ),
+      ),
+      PosColumn(
+        text: provider.cajero,
+        width: 10,
+        styles: const PosStyles(
+          align: PosAlign.left,
+          height: PosTextSize.size1,
+          width: PosTextSize.size1,
+          codeTable: 'CP1252',
+        ),
+      ),
+    ]);
+
+    bytes += generator.feed(1);
+
+    //Pie de página
+    bytes += generator.text(provider.telefono,
+        styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.text(provider.correo,
+        styles: const PosStyles(align: PosAlign.center));
+    bytes += generator.text('¡¡GRACIAS POR SU PREFERENCIA!!',
+        styles: const PosStyles(align: PosAlign.center, codeTable: 'CP1252'));
+    bytes += generator.row([
+      PosColumn(
+        text: provider.app,
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.right,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1,
+            codeTable: 'CP1252'),
+      ),
+      PosColumn(
+        text: provider.version,
+        width: 6,
+        styles: const PosStyles(
+            align: PosAlign.left,
+            bold: true,
+            height: PosTextSize.size1,
+            width: PosTextSize.size1,
+            codeTable: 'CP1252'),
+      ),
+    ]);
+    bytes += generator.feed(1);
+    bytes += generator.cut();
+    return bytes;
+  }
 
   Widget _buildTicketPreview(TicketCompraProvider provider) {
     return Card(
@@ -815,7 +816,8 @@ final img.Image resizedImage = img.copyResize(
               children: [
                 const Text('IMPORTE TOTAL:',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('\$${(provider.subtotalCompra + provider.ivaCompra).toStringAsFixed(2)}',
+                Text(
+                    '\$${(provider.subtotalCompra + provider.ivaCompra).toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
@@ -846,7 +848,8 @@ final img.Image resizedImage = img.copyResize(
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text('Imprimir Ticket',style:TextStyle(color: Colors.white)),
+          title: const Text('Imprimir Ticket',
+              style: TextStyle(color: Colors.white)),
           //centerTitle: true,
           backgroundColor: Colors.blue[800],
           //elevation: 0,
